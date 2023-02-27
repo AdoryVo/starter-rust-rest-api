@@ -1,0 +1,30 @@
+[package]
+name = "starter-rust-rest-api"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[workspace]
+members = [".", "entity", "migration"]
+
+[dependencies]
+entity = { path = "entity" }
+migration = { path = "migration" }
+
+axum = "0.6.8"
+axum-sessions = "0.4.1"
+dotenvy = "0.15.6"
+hyper = { version = "0.14.24", features = ["full"] }
+sea-orm = { version = "^0", features = [
+	"sqlx-postgres",
+	"runtime-tokio-rustls",
+	"macros",
+] }
+serde = { version = "1.0.152", features = ["derive"] }
+serde_json = "1.0.93"
+tokio = { version = "1.25.0", features = ["full"] }
+tower = "0.4.13"
+tower-http = { version = "0.4.0", features = ["trace"] }
+tracing = "0.1.37"
+tracing-subscriber = "0.3.16"
