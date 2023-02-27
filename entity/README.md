@@ -1,4 +1,4 @@
-# Running Migrator CLI
+# Running Entity CLI
 
 - Generate entity files
     ```sh

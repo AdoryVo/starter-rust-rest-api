@@ -1,31 +1,18 @@
-use axum::{
-    extract::{Query, State},
-    http::StatusCode,
-    response::IntoResponse,
-    routing::get,
-    Json, Router,
-};
+use axum::{response::IntoResponse, routing::get, Router};
 use axum_sessions::{
     async_session::MemoryStore,
     extractors::{ReadableSession, WritableSession},
     SessionLayer,
 };
 use dotenvy::dotenv;
-use entity::post;
-use entity::post::Entity as Post;
 use migration::{Migrator, MigratorTrait};
-use sea_orm::{
-    ActiveModelTrait, ActiveValue::Set, Database, DatabaseConnection, EntityTrait, ModelTrait,
-};
-use serde_json::Value;
+use sea_orm::{Database, DatabaseConnection};
 use std::env;
 use std::net::SocketAddr;
 use tower_http::trace::TraceLayer;
 
-#[derive(Clone)]
-pub struct AppState {
-    pub db: DatabaseConnection,
-}
+use starter_rust_rest_api::configuration::AppState;
+use starter_rust_rest_api::routes::*;
 
 #[tokio::main]
 async fn main() {
@@ -59,8 +46,9 @@ async fn main() {
         .route("/reset", get(reset_handler))
         .route(
             "/posts",
-            get(get_posts).post(create_post).delete(delete_post),
+            get(get_posts).post(create_post),
         )
+        .route("/posts/:post_id", get(get_post).delete(delete_post))
         .layer(session_layer)
         .layer(TraceLayer::new_for_http())
         .with_state(state);
@@ -94,55 +82,4 @@ async fn increment_handler(mut session: WritableSession) -> impl IntoResponse {
 async fn reset_handler(mut session: WritableSession) -> impl IntoResponse {
     session.destroy();
     "Count reset"
-}
-
-// # Database routes
-async fn get_posts(State(state): State<AppState>) -> Json<Vec<Value>> {
-    let posts = Post::find()
-        .into_json()
-        .all(&state.db)
-        .await
-        .expect("Cannot retrieve posts");
-    
-    Json(posts)
-}
-
-async fn create_post(State(state): State<AppState>) -> impl IntoResponse {
-    let new_post = post::ActiveModel {
-        title: Set("Post title".to_owned()),
-        text: Set("Post description".to_owned()),
-        ..Default::default() // all other attributes are `NotSet`
-    };
-
-    let new_post = new_post
-        .insert(&state.db)
-        .await
-        .expect("Cannot create post");
-
-    Json(new_post)
-}
-
-#[derive(serde::Deserialize)]
-struct DeleteQuery {
-    post_id: i32,
-}
-async fn delete_post(
-    State(state): State<AppState>,
-    query: Query<DeleteQuery>,
-) -> impl IntoResponse {
-    let post = Post::find_by_id(query.0.post_id)
-        .one(&state.db)
-        .await
-        .expect("Cannot access database");
-    
-    match post {
-        None => (StatusCode::NOT_FOUND, format!("Post not found")),
-        Some(post) => {
-            let res = post.delete(&state.db).await.expect("Cannot delete post");
-            (
-                StatusCode::OK,
-                format!("Deleted {} posts", res.rows_affected),
-            )
-        }
-    }
 }
