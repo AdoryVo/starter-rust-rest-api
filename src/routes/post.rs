@@ -4,11 +4,14 @@ use axum::{
     response::IntoResponse,
     Json,
 };
+use axum_sessions::extractors::ReadableSession;
 use entity::post;
 use entity::post::Entity as Post;
+use entity::user::Entity as User;
 use sea_orm::{ActiveModelTrait, ActiveValue::Set, EntityTrait, ModelTrait};
 use serde::Deserialize;
 use serde_json::Value;
+use uuid::Uuid;
 
 use crate::configuration::AppState;
 
@@ -25,21 +28,37 @@ pub struct PostForm {
 
 // POST /posts
 pub async fn create_post(
+    session: ReadableSession,
     State(state): State<AppState>,
     Json(payload): Json<PostForm>,
 ) -> impl IntoResponse {
-    let new_post = post::ActiveModel {
-        title: Set(payload.title.to_owned()),
-        text: Set(payload.text.to_owned()),
-        ..Default::default() // all other attributes are `NotSet`
-    };
+    if let Some(user_id) = session.get::<Uuid>("id") {
+        let user = User::find_by_id(user_id)
+            .one(&state.db)
+            .await
+            .expect("Cannot retrieve users");
 
-    let new_post = new_post
-        .insert(&state.db)
-        .await
-        .expect("Cannot create post");
-
-    (StatusCode::CREATED, Json(new_post))
+        match user {
+            None => (StatusCode::NOT_FOUND, Json(None)),
+            Some(_) => {
+                let new_post = post::ActiveModel {
+                    title: Set(payload.title.to_owned()),
+                    text: Set(payload.text.to_owned()),
+                    user_id: Set(user_id.to_owned()),
+                    ..Default::default() // all other attributes are `NotSet`
+                };
+            
+                let new_post = new_post
+                    .insert(&state.db)
+                    .await
+                    .expect("Cannot create post");
+            
+                (StatusCode::CREATED, Json(Some(new_post)))
+            },
+        }
+    } else {
+        (StatusCode::UNAUTHORIZED, Json(None))
+    }
 }
 
 // GET /posts
