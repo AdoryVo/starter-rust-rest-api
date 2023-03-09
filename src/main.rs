@@ -1,4 +1,8 @@
-use axum::{response::IntoResponse, routing::get, Router};
+use axum::{
+    response::IntoResponse,
+    routing::{get, post},
+    Router,
+};
 use axum_sessions::{
     async_session::MemoryStore,
     extractors::{ReadableSession, WritableSession},
@@ -44,11 +48,20 @@ async fn main() {
         .route("/", get(display_handler))
         .route("/inc", get(increment_handler))
         .route("/reset", get(reset_handler))
+        .route("/posts", get(get_posts).post(create_post))
         .route(
-            "/posts",
-            get(get_posts).post(create_post),
+            "/posts/:post_id",
+            get(get_post).put(update_post).delete(delete_post),
         )
-        .route("/posts/:post_id", get(get_post).delete(delete_post))
+        .route(
+            "/users",
+            get(get_current_user)
+                .post(create_user)
+                .put(update_current_user),
+        )
+        .route("/users/:user_id", get(get_user).delete(delete_user))
+        .route("/signin", post(signin))
+        .route("/signout", post(signout))
         .layer(session_layer)
         .layer(TraceLayer::new_for_http())
         .with_state(state);

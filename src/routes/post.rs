@@ -1,6 +1,5 @@
 use axum::{
     extract::{Path, State},
-    Form,
     http::StatusCode,
     response::IntoResponse,
     Json,
@@ -21,14 +20,17 @@ pub struct IdPath {
 #[derive(Deserialize)]
 pub struct PostForm {
     title: String,
-    text: String
+    text: String,
 }
 
 // POST /posts
-pub async fn create_post(State(state): State<AppState>) -> impl IntoResponse {
+pub async fn create_post(
+    State(state): State<AppState>,
+    Json(payload): Json<PostForm>,
+) -> impl IntoResponse {
     let new_post = post::ActiveModel {
-        title: Set("Post title".to_owned()),
-        text: Set("Post description".to_owned()),
+        title: Set(payload.title.to_owned()),
+        text: Set(payload.text.to_owned()),
         ..Default::default() // all other attributes are `NotSet`
     };
 
@@ -54,7 +56,7 @@ pub async fn get_posts(State(state): State<AppState>) -> Json<Vec<Value>> {
 // GET /posts/:post_id
 pub async fn get_post(
     State(state): State<AppState>,
-    Path(IdPath { post_id }): Path<IdPath>
+    Path(IdPath { post_id }): Path<IdPath>,
 ) -> impl IntoResponse {
     let post = Post::find_by_id(post_id)
         .one(&state.db)
@@ -63,7 +65,7 @@ pub async fn get_post(
 
     match post {
         None => (StatusCode::NOT_FOUND, Json(post)),
-        Some(_) => (StatusCode::OK, Json(post))
+        Some(_) => (StatusCode::OK, Json(post)),
     }
 }
 
@@ -71,7 +73,7 @@ pub async fn get_post(
 pub async fn update_post(
     State(state): State<AppState>,
     Path(IdPath { post_id }): Path<IdPath>,
-    Form(update): Form<PostForm>
+    Json(update): Json<PostForm>,
 ) -> impl IntoResponse {
     let post_result = Post::find_by_id(post_id)
         .one(&state.db)
@@ -86,7 +88,7 @@ pub async fn update_post(
             post.text = Set(update.text.to_owned());
             post.update(&state.db).await.expect("Cannot delete post");
 
-            StatusCode::OK
+            StatusCode::NO_CONTENT
         }
     }
 }
@@ -94,7 +96,7 @@ pub async fn update_post(
 // DELETE /posts/:post_id
 pub async fn delete_post(
     State(state): State<AppState>,
-    Path(IdPath { post_id }): Path<IdPath>
+    Path(IdPath { post_id }): Path<IdPath>,
 ) -> impl IntoResponse {
     let post = Post::find_by_id(post_id)
         .one(&state.db)

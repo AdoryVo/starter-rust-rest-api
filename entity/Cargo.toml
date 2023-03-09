@@ -9,5 +9,14 @@ name = "entity"
 path = "src/lib.rs"
 
 [dependencies]
+chrono = "0.4.23"
 sea-orm = { version = "^0" }
 serde = { version = "1.0.152", features = ["derive"] }
+
+[dependencies.uuid]
+version = "1.3.0"
+features = [
+    "v4",                # Lets you generate random UUIDs
+    "fast-rng",          # Use a faster (but still sufficiently random) RNG
+    "macro-diagnostics", # Enable better diagnostics for compile-time UUIDs
+]

@@ -2,6 +2,8 @@
 
 - Generate a new migration file
     ```sh
+    sea-orm-cli migrate generate MIGRATION_NAME
+    # OR
     cargo run -- migrate generate MIGRATION_NAME
     ```
 - Apply all pending migrations
