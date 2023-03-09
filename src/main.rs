@@ -1,13 +1,9 @@
 use async_redis_session::RedisSessionStore;
 use axum::{
-    response::IntoResponse,
     routing::{get, post},
     Router,
 };
-use axum_sessions::{
-    extractors::{ReadableSession, WritableSession},
-    SessionLayer,
-};
+use axum_sessions::SessionLayer;
 use dotenvy::dotenv;
 use migration::{Migrator, MigratorTrait};
 use sea_orm::{Database, DatabaseConnection};
@@ -46,9 +42,6 @@ async fn main() {
 
     // build the app
     let app = Router::new()
-        .route("/", get(display_handler))
-        .route("/inc", get(increment_handler))
-        .route("/reset", get(reset_handler))
         .route("/posts", get(get_posts).post(create_post))
         .route(
             "/posts/:post_id",
@@ -74,26 +67,4 @@ async fn main() {
         .serve(app.into_make_service())
         .await
         .unwrap();
-}
-
-// # Session routes
-async fn display_handler(session: ReadableSession) -> impl IntoResponse {
-    let mut count = 0;
-    count = session.get("count").unwrap_or(count);
-    format!(
-        "Count is: {}; visit /inc to increment and /reset to reset",
-        count
-    )
-}
-
-async fn increment_handler(mut session: WritableSession) -> impl IntoResponse {
-    let mut count = 1;
-    count = session.get("count").map(|n: i32| n + 1).unwrap_or(count);
-    session.insert("count", count).unwrap();
-    format!("Count is: {}", count)
-}
-
-async fn reset_handler(mut session: WritableSession) -> impl IntoResponse {
-    session.destroy();
-    "Count reset"
 }
