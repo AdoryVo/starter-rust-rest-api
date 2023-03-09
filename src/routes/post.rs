@@ -47,14 +47,14 @@ pub async fn create_post(
                     user_id: Set(user_id.to_owned()),
                     ..Default::default() // all other attributes are `NotSet`
                 };
-            
+
                 let new_post = new_post
                     .insert(&state.db)
                     .await
                     .expect("Cannot create post");
-            
+
                 (StatusCode::CREATED, Json(Some(new_post)))
-            },
+            }
         }
     } else {
         (StatusCode::UNAUTHORIZED, Json(None))

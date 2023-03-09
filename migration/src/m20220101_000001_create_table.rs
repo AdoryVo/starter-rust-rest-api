@@ -46,5 +46,5 @@ enum Post {
     Id,
     Title,
     Text,
-    UserId
+    UserId,
 }

@@ -1,10 +1,10 @@
+use async_redis_session::RedisSessionStore;
 use axum::{
     response::IntoResponse,
     routing::{get, post},
     Router,
 };
 use axum_sessions::{
-    async_session::MemoryStore,
     extractors::{ReadableSession, WritableSession},
     SessionLayer,
 };
@@ -23,6 +23,7 @@ async fn main() {
     // load environment variables
     dotenv().ok();
     let database_url = env::var("DATABASE_URL").expect(".env must have DATABASE_URL");
+    let redis_url = env::var("REDIS_URL").expect(".env must have REDIS_URL");
 
     // initialize tracing
     tracing_subscriber::fmt()
@@ -36,7 +37,7 @@ async fn main() {
     Migrator::up(&db, None).await.unwrap();
 
     // initialize session layer
-    let store = MemoryStore::new();
+    let store = RedisSessionStore::new(redis_url).expect("Redis connection failed");
     let secret = b"super-long-and-secret-random-key-needed-to-verify-message-integrity";
     let session_layer = SessionLayer::new(store, secret).with_secure(false);
 

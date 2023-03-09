@@ -11,7 +11,7 @@ pub struct Model {
     pub id: i32,
     pub title: String,
     pub text: String,
-    pub user_id: Uuid
+    pub user_id: Uuid,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -21,7 +21,7 @@ pub enum Relation {
         from = "Column::UserId",
         to = "super::user::Column::Id"
     )]
-    User
+    User,
 }
 
 // `Related` trait has to be implemented by hand
