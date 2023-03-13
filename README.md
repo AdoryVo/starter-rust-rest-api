@@ -2,14 +2,12 @@
 *Work In Progress*
 
 # 🚀 Getting Started
-- Download Rust & the following CLI tools
+- Download Rust & the SeaORM CLI
 	- `cargo install sea-orm-cli`
-	- `cargo install sqlx-cli --no-default-features --features rustls,postgres`
 - Download Docker Compose to host your database & the Redis session store
 	- Run `docker compose up --build` to build your Docker image
 - Rename `TODO.env` to `.env`
-- Run `sqlx database create` to create a database in your Postgres instance
-- Run `cargo run` to run the backend at localhost:8080
+- Run `cargo run` to run the backend at http://localhost:8080
 
 # 🧑‍🚀 Development
 - `docker compose start`: Start your existing Docker image
